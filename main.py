@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 rho = 1000  # Tissue density (kg/m^3)
 c = 4000  # Specific heat of tissue (J/kg°C)
 k = 0.5  # Thermal conductivity of tissue (W/m°C)
-k_star = 0.1  # Additional thermal conductivity term (W/m°C/s)
+k_star = 0.01  # Additional thermal conductivity term (W/m°C/s)
+h = 5  # Heat transfer coefficient for Robin boundary condition (W/m^2°C) - Typical for large blood vessels
 wb = 0.0098  # Blood perfusion rate coefficient (1/s) - Typical for skin tissue
 rho_b = 1056  # Density of blood (kg/m^3)
 cb = 4000  # Specific heat of blood (J/kg°C)
 Qm0 = 50.56  # Metabolic heat generation (W/m^3)
-Tb = 38  # Temperature of arterial blood (°C)
+Tb = 37  # Temperature of arterial blood (°C)
 T0 = 37  # Initial temperature of the body (°C)
 Tl = 37  # Temperature of Tissue (°C)
 Tw = 3.93  # Fixed temperature at bottom boundary
@@ -23,7 +24,6 @@ time_steps = 1000  # Number of time steps
 tau_q_list = [600, 900, 1200]  # List of relaxation times due to heat flux (s)
 tau_T = 300  # Relaxation time due to temperature gradient (s)
 tau_v = 100  # Relaxation time due to thermal displacement (s)
-h = 1  # Heat transfer coefficient for Robin boundary condition (W/m^2°C) - Typical for large blood vessels
 
 # Discretization
 x = np.arange(0, Lx + dx, dx)
@@ -38,22 +38,25 @@ d2Tdt2_initial = np.ones((nx, ny))  # Initial second time derivative of temperat
 dTdt_initial[0, :] = 0  # y = Ly
 dTdt_initial[:, -1] = 0  # x = Lx
 
+# Initialize temperature field
+T_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
+T_new_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
+
+# Set the boundary values
+T_initial[-1, :] = Tw  # Bottom boundary (y = 0)
+T_initial[:, 0] = Tw  # Top boundary (y = Ly)
+
 # Plotting the results
 time = np.arange(0, time_steps * dt, dt)
 plt.figure(figsize=(10, 6))
 
 for tau_q in tau_q_list:
-    # Initialize temperature field
-    T = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
-    T_new = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
-
-    # Set the boundary values
-    T[-1, :] = Tw  # Bottom boundary (y = 0)
-    T[:, 0] = Tw  # Top boundary (y = Ly)
-
     # Initialize time derivatives
     dTdt = dTdt_initial.copy()
     d2Tdt2 = d2Tdt2_initial.copy()
+
+    T = T_initial.copy()
+    T_new = T_new_initial.copy()
 
     # Store temperature profile at each time step
     temperature_profile = []
@@ -106,13 +109,12 @@ fig, axes = plt.subplots(1, len(tau_q_list), figsize=(18, 6))
 time = np.arange(0, time_steps * dt, dt)
 
 for idx, tau_q in enumerate(tau_q_list):
-    # Initialize temperature field
-    T = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
-    T_new = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
+    # Initialize time derivatives
+    dTdt = dTdt_initial.copy()
+    d2Tdt2 = d2Tdt2_initial.copy()
 
-    # Set the boundary values
-    T[-1, :] = Tw  # Bottom boundary (y = 0)
-    T[:, 0] = Tw  # Top boundary (y = Ly)
+    T = T_initial.copy()
+    T_new = T_new_initial.copy()
 
     for t in range(time_steps):
         for i in range(1, nx - 1):
