@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 rho = 1000  # Tissue density (kg/m^3)
 c = 4000  # Specific heat of tissue (J/kg°C)
 k = 0.5  # Thermal conductivity of tissue (W/m°C)
-k_star = 0.01  # Additional thermal conductivity term (W/m°C/s)
-h = 5  # Heat transfer coefficient for Robin boundary condition (W/m^2°C) - Typical for large blood vessels
+k_star = 0.1  # Additional thermal conductivity term (W/m°C/s)
+h = 4.5  # Heat transfer coefficient for Robin boundary condition (W/m^2°C) - Typical for large blood vessels
 wb = 0.0098  # Blood perfusion rate coefficient (1/s) - Typical for skin tissue
 rho_b = 1056  # Density of blood (kg/m^3)
 cb = 4000  # Specific heat of blood (J/kg°C)
@@ -14,7 +14,7 @@ Qm0 = 50.56  # Metabolic heat generation (W/m^3)
 Tb = 37  # Temperature of arterial blood (°C)
 T0 = 37  # Initial temperature of the body (°C)
 Tl = 37  # Temperature of Tissue (°C)
-Tw = 3.93  # Fixed temperature at bottom boundary
+Tw = 3.93  # Fixed temperature at left and bottom boundary
 Lx = 0.05  # Length of the skin tissue in x direction (m)
 Ly = 0.05  # Length of the skin tissue in y direction (m)
 dx = 0.01  # Space step in x direction (m)
@@ -43,8 +43,8 @@ T_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
 T_new_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
 
 # Set the boundary values
-T_initial[-1, :] = Tw  # Bottom boundary (y = 0)
-T_initial[:, 0] = Tw  # Top boundary (y = Ly)
+T_initial[-1, :] = Tw  # left boundary (y = 0)
+T_initial[:, 0] = Tw  # bottom boundary (y = Ly)
 
 # Plotting the results
 time = np.arange(0, time_steps * dt, dt)
@@ -71,7 +71,7 @@ for tau_q in tau_q_list:
                 d2Tdx2 = (T[i + 1, j] - 2 * T[i, j] + T[i - 1, j]) / dx ** 2
                 d2Tdy2 = (T[i, j + 1] - 2 * T[i, j] + T[i, j - 1]) / dy ** 2
                 dTdt = (k * (d2Tdx2 + d2Tdy2) + Qb + Qm) / (rho * c)
-                d2Tdt2 = (k_star * (d2Tdx2 + d2Tdy2)) / (rho * c)
+                d2Tdt2 = (k_star * (d2Tdx2 + d2Tdy2)) / (rho * c) # rate of k value change. included in second order derivative.  Qm and Qb are constants
 
                 T_new[i, j] = T[i, j] + dt * (dTdt + tau_q * dTdt - tau_T * d2Tdt2 + (k + k_star * tau_v) * dTdt)
 
