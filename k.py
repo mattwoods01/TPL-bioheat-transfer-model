@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # Constants and parameters
 rho = 1000  # Tissue density (kg/m^3)
 c = 4000  # Specific heat of tissue (J/kg°C)
-k_list = [0.625, 0.7, 0.9, 1.5]  # Thermal conductivity of tissue (W/m°C)
+k_list = [0.625, 0.7, 0.9]  # Thermal conductivity of tissue (W/m°C)
 k_star = 0.01  # Additional thermal conductivity term (W/m°C/s)
 h = 4.5  # Heat transfer coefficient for Robin boundary condition (W/m^2°C) - Typical for large blood vessels
 wb = 0.0098  # Blood perfusion rate coefficient (1/s) - Typical for skin tissue
@@ -14,7 +14,7 @@ Qm0 = 50.65  # Metabolic heat generation (W/m^3)
 Tb = 37  # Temperature of arterial blood (°C)
 T0 = 37  # Initial temperature of the body (°C)
 Tl = 37  # Temperature of Tissue (°C)
-Tw = 39.3  # Fixed temperature at left and bottom boundary
+Tw = -100  # Fixed temperature at left and bottom boundary
 Lx = 0.05  # Length of the skin tissue in x direction (m)
 Ly = 0.05  # Length of the skin tissue in y direction (m)
 dx = 0.01  # Space step in x direction (m)
@@ -33,7 +33,7 @@ x = np.arange(0, Lx + dx, dx)
 y = np.arange(0, Ly + dy, dy)
 nx = len(x)
 ny = len(y)
-wall_temp = False
+wall_temp_duration = 3 # Wall Temperature 'ON' duration (s)
 
 dTdt_initial = np.zeros((nx, ny))  # Initial first time derivative of temperature
 d2Tdt2_initial = np.zeros((nx, ny))  # Initial second time derivative of temperature
@@ -64,7 +64,7 @@ for k in k_list:
     temperature_profile = []
 
     # Time integration
-    for t in range(time_steps):
+    for t in range(time_steps):  
         for i in range(1, nx - 1):
             for j in range(1, ny - 1):
                 Qb = wb * rho_b * cb * (Tb - Tl)
@@ -78,7 +78,7 @@ for k in k_list:
 
                 T_new[i, j] = T[i, j] + dt * (dTdt[i, j] + tau_q * dTdt[i, j] - tau_T * d2Tdt2[i, j] + (k + k_star * tau_v) * dTdt[i, j])
 
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -89,7 +89,7 @@ for k in k_list:
         T_new[:, 0] = T_new[:, 1]  # y = 0
         T_new[:, -1] = T_new[:, -2]  # y = Ly
 
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -100,7 +100,7 @@ for k in k_list:
         T_new[:, 0] = (T_new[:, 1] + h * dy / k * Tl) / (1 + h * dy / k)  # y = Ly
         T_new[:, -1] = (T_new[:, -2] + h * dy / k * Tl) / (1 + h * dy / k)  # y = 0
 
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -109,8 +109,7 @@ for k in k_list:
         T_new[-1, :] = T_new[-2, :] - (k / ku) * (T_new[-2, :] - T_new[-3, :])
         T_new[:, 0] = T_new[:, 1] - (ku / k) * (T_new[:, 1] - T_new[:, 2])
 
-
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -152,7 +151,7 @@ for idx, k in enumerate(k_list):
     temperature_profile = []
 
     # Time integration
-    for t in range(time_steps):
+    for t in range(time_steps):  
         for i in range(1, nx - 1):
             for j in range(1, ny - 1):
                 Qb = wb * rho_b * cb * (Tb - Tl)
@@ -166,8 +165,7 @@ for idx, k in enumerate(k_list):
 
                 T_new[i, j] = T[i, j] + dt * (dTdt[i, j] + tau_q * dTdt[i, j] - tau_T * d2Tdt2[i, j] + (k + k_star * tau_v) * dTdt[i, j])
 
-        
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -178,7 +176,7 @@ for idx, k in enumerate(k_list):
         T_new[:, 0] = T_new[:, 1]  # y = 0
         T_new[:, -1] = T_new[:, -2]  # y = Ly
 
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -189,7 +187,7 @@ for idx, k in enumerate(k_list):
         T_new[:, 0] = (T_new[:, 1] + h * dy / k * Tl) / (1 + h * dy / k)  # y = Ly
         T_new[:, -1] = (T_new[:, -2] + h * dy / k * Tl) / (1 + h * dy / k)  # y = 0
 
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -198,8 +196,7 @@ for idx, k in enumerate(k_list):
         T_new[-1, :] = T_new[-2, :] - (k / ku) * (T_new[-2, :] - T_new[-3, :])
         T_new[:, 0] = T_new[:, 1] - (ku / k) * (T_new[:, 1] - T_new[:, 2])
 
-
-        if wall_temp is True:
+        if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
@@ -211,6 +208,7 @@ for idx, k in enumerate(k_list):
     X, Y = np.meshgrid(x, y)
     ax = axes[idx]
     T_rotated = np.rot90(T, -1)
+
     contour = ax.contourf(T_rotated, 30, cmap='hot')  # Transpose T for correct orientation
     fig.colorbar(contour, ax=ax)
     ax.set_xlabel('Length in cm')
