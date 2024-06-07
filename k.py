@@ -14,7 +14,7 @@ Qm0 = 50.65  # Metabolic heat generation (W/m^3)
 Tb = 37  # Temperature of arterial blood (°C)
 T0 = 37  # Initial temperature of the body (°C)
 Tl = 37  # Temperature of Tissue (°C)
-Tw = -100  # Fixed temperature at left and bottom boundary
+Tw = 190  # Fixed temperature at left and bottom boundary
 Lx = 0.05  # Length of the skin tissue in x direction (m)
 Ly = 0.05  # Length of the skin tissue in y direction (m)
 dx = 0.01  # Space step in x direction (m)
@@ -33,7 +33,7 @@ x = np.arange(0, Lx + dx, dx)
 y = np.arange(0, Ly + dy, dy)
 nx = len(x)
 ny = len(y)
-wall_temp_duration = 3 # Wall Temperature 'ON' duration (s)
+wall_temp_duration = 1000 # Wall Temperature 'ON' duration (s)
 
 dTdt_initial = np.zeros((nx, ny))  # Initial first time derivative of temperature
 d2Tdt2_initial = np.zeros((nx, ny))  # Initial second time derivative of temperature
@@ -41,12 +41,6 @@ d2Tdt2_initial = np.zeros((nx, ny))  # Initial second time derivative of tempera
 # Initialize temperature field
 T_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
 T_new_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
-
-T_initial[-1, :] = Tw
-T_initial[:, 0] = Tw
-
-T_new_initial[-1, :] = Tw
-T_new_initial[:, 0] = Tw
 
 # Plotting the results
 time = np.arange(0, time_steps * dt, dt)
@@ -59,6 +53,13 @@ for k in k_list:
 
     T = T_initial.copy()
     T_new = T_new_initial.copy()
+
+    if wall_temp_duration > 0:
+        T[-1, :] = Tw
+        T[:, 0] = Tw
+
+        T_new[-1, :] = Tw
+        T_new[:, 0] = Tw
 
     # Store temperature profile at each time step
     temperature_profile = []
@@ -94,7 +95,7 @@ for k in k_list:
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
 
-        # Robin boundary condition on all boundaries
+        # Robin boundary condition on all boundaries (convective)
         T_new[0, :] = (T_new[1, :] + h * dx / k * Tl) / (1 + h * dx / k)  # x = Lx
         T_new[-1, :] = (T_new[-2, :] + h * dx / k * Tl) / (1 + h * dx / k)  # x = 0
         T_new[:, 0] = (T_new[:, 1] + h * dy / k * Tl) / (1 + h * dy / k)  # y = Ly
@@ -105,9 +106,10 @@ for k in k_list:
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
         
-        # Heat flux continuity: -ku * dT/dx at x = 0 for left material equals -kv * dT/dx at x = 0 for right material
-        T_new[-1, :] = T_new[-2, :] - (k / ku) * (T_new[-2, :] - T_new[-3, :])
-        T_new[:, 0] = T_new[:, 1] - (ku / k) * (T_new[:, 1] - T_new[:, 2])
+        if wall_temp_duration != 0:
+            # Heat flux continuity: -ku * dT/dx at x = 0 for left material equals -kv * dT/dx at x = 0 for right material
+            T_new[-1, :] = T_new[-2, :] - (k / ku) * (T_new[-2, :] - T_new[-3, :])
+            T_new[:, 0] = T_new[:, 1] - (ku / k) * (T_new[:, 1] - T_new[:, 2])
 
         if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
@@ -147,6 +149,13 @@ for idx, k in enumerate(k_list):
     T = T_initial.copy()
     T_new = T_new_initial.copy()
 
+    if wall_temp_duration > 0:
+        T[-1, :] = Tw
+        T[:, 0] = Tw
+
+        T_new[-1, :] = Tw
+        T_new[:, 0] = Tw
+
     # Store temperature profile at each time step
     temperature_profile = []
 
@@ -192,9 +201,10 @@ for idx, k in enumerate(k_list):
             T_new[-1, :] = Tw  # x = Lx (bottom boundary)
             T_new[:, 0] = Tw  # y = 0 (left boundary)
         
-        # Heat flux continuity: -ku * dT/dx at x = 0 for left material equals -kv * dT/dx at x = 0 for right material
-        T_new[-1, :] = T_new[-2, :] - (k / ku) * (T_new[-2, :] - T_new[-3, :])
-        T_new[:, 0] = T_new[:, 1] - (ku / k) * (T_new[:, 1] - T_new[:, 2])
+        if wall_temp_duration != 0:
+            # Heat flux continuity: -ku * dT/dx at x = 0 for left material equals -kv * dT/dx at x = 0 for right material
+            T_new[-1, :] = T_new[-2, :] - (k / ku) * (T_new[-2, :] - T_new[-3, :])
+            T_new[:, 0] = T_new[:, 1] - (ku / k) * (T_new[:, 1] - T_new[:, 2])
 
         if t < wall_temp_duration:
             # Reapply fixed temperature boundary condition at each time step
