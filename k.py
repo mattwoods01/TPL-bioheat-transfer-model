@@ -20,30 +20,57 @@ Ly = 0.05  # Length of the skin tissue in y direction (m)
 dx = 0.01  # Space step in x direction (m)
 dy = 0.01  # Space step in y direction (m)
 dt = 0.1  # Time step (s)
+wall_temp_duration = 450 # Wall Temperature 'ON' duration (s)
+remove_wall_after = True # Remove Wall if True, disables fourth boundry condition on boundry border
 time_steps = 1000  # Number of time steps
-tau_q = 600  # List of relaxation times due to heat flux (s)
+tau_q = 600  # Relaxation time due to heat flux (s)
 tau_T = 300  # Relaxation time due to temperature gradient (s)
 tau_v = 100  # Relaxation time due to thermal displacement (s)
-ambient_temp = 37
+ambient_temp = 37 # Ambient temperature of space without initialized wall temp (°C)
 
 # Constants for the second material (assuming for the boundary condition of fourth kind)
 ku = 0.7  # Thermal conductivity of left material (W/m°C)
+
+DOI = 'https://doi.org/10.1016/j.ijthermalsci.2022.108002'
+
+if wall_temp_duration == time_steps:
+    remove_wall_after = False
+
+# Boundry between wall and tissue
+def wall_boundry(T_array, wall_temp):
+    T_array[-1, :] = wall_temp  # x = 0 (bottom boundary)
+    T_array[:, 0] = wall_temp  # y = 0 (left boundary)
+
+# Symmetrical Boundry conditions from eq. 16
+def symmetric_boundry(T_array):
+    T_array[0, :] = T_array[1, :]  # x = Lx
+    T_array[-1, :] = T_array[-2, :]  # x = 0
+    T_array[:, 0] = T_array[:, 1]  # y = 0
+    T_array[:, -1] = T_array[:, -2]  # y = Ly
+
+# Convective boundry condition to introduce a constant heat coefficient
+def convective_boundry(T_array):
+    T_array[0, :] = (T_array[1, :] + h * dx / k * Tl) / (1 + h * dx / k)  # x = Lx
+    T_array[-1, :] = (T_array[-2, :] + h * dx / k * Tl) / (1 + h * dx / k)  # x = 0
+    T_array[:, 0] = (T_array[:, 1] + h * dy / k * Tl) / (1 + h * dy / k)  # y = 0
+    T_array[:, -1] = (T_array[:, -2] + h * dy / k * Tl) / (1 + h * dy / k)  # y = Ly
+
+# Fourth boundry for constant temperature and heat flux from secondary paper.
+def fourth_boundry(T_array):
+    T_array[-1, :] = T_array[-2, :] - (k / ku) * (T_array[-2, :] - T_array[-3, :]) # x = 0
+    T_array[:, 0] = T_array[:, 1] - (ku / k) * (T_array[:, 1] - T_array[:, 2])  # y = 0
 
 # Discretization
 x = np.arange(0, Lx + dx, dx)
 y = np.arange(0, Ly + dy, dy)
 nx = len(x)
 ny = len(y)
-wall_temp_duration = 450 # Wall Temperature 'ON' duration (s)
-remove_wall_after = False
 
-if wall_temp_duration == time_steps:
-    remove_wall_after = False
-
+# Initialize time derivatives
 dTdt_initial = np.zeros((nx, ny))  # Initial first time derivative of temperature
 d2Tdt2_initial = np.zeros((nx, ny))  # Initial second time derivative of temperature
 
-# Initialize temperature field
+# Initialize temperature fields
 T_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
 T_new_initial = np.ones((nx, ny)) * T0  # Initialize entire temperature field to T0
 
@@ -52,26 +79,23 @@ time = np.arange(0, time_steps * dt, dt)
 plt.figure(figsize=(10, 6))
 
 for k in k_list:
-    # Initialize time derivatives
+    # Copy time derivatives
     dTdt = dTdt_initial.copy()
     d2Tdt2 = d2Tdt2_initial.copy()
 
+    # Copy temperature fields
     T = T_initial.copy()
     T_new = T_new_initial.copy()
     
+    # Check if wall is initialized
     if wall_temp_duration > 0:
-        T[-1, :] = Tw
-        T[:, 0] = Tw
+        wall_boundry(T, Tw)
+        wall_boundry(T_new, Tw)
 
-        T_new[-1, :] = Tw
-        T_new[:, 0] = Tw
-
+    # Else use ambient temperature of air
     else:
-        T[-1, :] = ambient_temp
-        T[:, 0] = ambient_temp
-
-        T_new[-1, :] = ambient_temp
-        T_new[:, 0] = ambient_temp
+        wall_boundry(T, ambient_temp)
+        wall_boundry(T_new, ambient_temp)
 
     # Store temperature profile at each time step
     temperature_profile = []
@@ -80,53 +104,51 @@ for k in k_list:
     for t in range(time_steps):  
         for i in range(1, nx - 1):
             for j in range(1, ny - 1):
-                Qb = wb * rho_b * cb * (Tb - Tl)
+                # From eq. 5
                 Qm = Qm0 * (1 + (Tl - T0) / 10)
 
+                #From eq. 6
+                Qb = wb * rho_b * cb * (Tb - Tl)
+
+                # Discretization using finite difference method
                 d2Tdx2 = (T_new[i + 1, j] - 2 * T_new[i, j] + T_new[i - 1, j]) / dx ** 2
                 d2Tdy2 = (T_new[i, j + 1] - 2 * T_new[i, j] + T_new[i, j - 1]) / dy ** 2
 
+                # From eq. 4
                 dTdt[i, j] = (k * (d2Tdx2 + d2Tdy2) + Qb + Qm) / (rho * c)
+
+                # Derivative of eq. 4 with k* integrated
                 d2Tdt2[i, j] = (k_star * (d2Tdx2 + d2Tdy2)) / (rho * c)
 
+                # Substitute finite differences from discretization into eq. 7 and solve for T_n+1 
                 T_new[i, j] = T[i, j] + dt * (dTdt[i, j] + tau_q * dTdt[i, j] - tau_T * d2Tdt2[i, j] + (k + k_star * tau_v) * dTdt[i, j])
 
+        # Reapply fixed temperature boundary condition at each time step
         if t < wall_temp_duration:
-            # Reapply fixed temperature boundary condition at each time step
-            T_new[-1, :] = Tw  # x = Lx (bottom boundary)
-            T_new[:, 0] = Tw  # y = 0 (left boundary)
+            wall_boundry(T_new, Tw)
 
         # Symmetric boundary conditions (Neumann conditions with zero gradient)
-        T_new[0, :] = T_new[1, :]  # x = 0
-        T_new[-1, :] = T_new[-2, :]  # x = Lx
-        T_new[:, 0] = T_new[:, 1]  # y = 0
-        T_new[:, -1] = T_new[:, -2]  # y = Ly
+        symmetric_boundry(T_new)
 
+        # Reapply fixed temperature boundary condition at each time step
         if t < wall_temp_duration:
-            # Reapply fixed temperature boundary condition at each time step
-            T_new[-1, :] = Tw  # x = Lx (bottom boundary)
-            T_new[:, 0] = Tw  # y = 0 (left boundary)
+            wall_boundry(T_new, Tw)
 
         # Robin boundary condition on all boundaries (convective)
-        T_new[0, :] = (T_new[1, :] + h * dx / k * Tl) / (1 + h * dx / k)  # x = Lx
-        T_new[-1, :] = (T_new[-2, :] + h * dx / k * Tl) / (1 + h * dx / k)  # x = 0
-        T_new[:, 0] = (T_new[:, 1] + h * dy / k * Tl) / (1 + h * dy / k)  # y = Ly
-        T_new[:, -1] = (T_new[:, -2] + h * dy / k * Tl) / (1 + h * dy / k)  # y = 0
+        convective_boundry(T_new)
 
+        # Reapply fixed temperature boundary condition at each time step
         if t < wall_temp_duration:
-            # Reapply fixed temperature boundary condition at each time step
-            T_new[-1, :] = Tw  # x = Lx (bottom boundary)
-            T_new[:, 0] = Tw  # y = 0 (left boundary)
-        
+            wall_boundry(T_new, Tw)
+
+        # Apply 4th boundry condition at boundry border between wall and tissue
         if wall_temp_duration != 0:
             if t < wall_temp_duration or remove_wall_after is False: 
-                T_new[-1, :] = T_new[-2, :] - (k / ku) * (T_new[-2, :] - T_new[-3, :])
-                T_new[:, 0] = T_new[:, 1] - (ku / k) * (T_new[:, 1] - T_new[:, 2])
+                fourth_boundry(T_new)
 
+        # Reapply fixed temperature boundary condition at each time step
         if t < wall_temp_duration:
-            # Reapply fixed temperature boundary condition at each time step
-            T_new[-1, :] = Tw  # x = Lx (bottom boundary)
-            T_new[:, 0] = Tw  # y = 0 (left boundary)
+            wall_boundry(T_new, Tw)
 
         # Update temperature
         T = T_new.copy()
