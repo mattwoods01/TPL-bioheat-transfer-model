@@ -5,8 +5,8 @@ from matplotlib.animation import FuncAnimation
 # Constants and parameters
 rho = 1000  # Tissue density (kg/m^3)
 c = 4000  # Specific heat of tissue (J/kg°C)
-k_list = [0.625, 0.7, 0.9]  # Thermal conductivity of tissue (W/m°C)
-k_star = 1  # Additional thermal conductivity term (W/m°C/s)
+k_list = [0.3, 0.625, 1, 1.5]  # Thermal conductivity of tissue (W/m°C)
+k_star = 0.1 # Additional thermal conductivity term (W/m°C/s)
 h = 4.5  # Heat transfer coefficient for Robin boundary condition (W/m^2°C) - Typical for large blood vessels
 wb = 0.0098  # Blood perfusion rate coefficient (1/s) - Typical for skin tissue
 rho_b = 1056  # Density of blood (kg/m^3)
@@ -15,24 +15,25 @@ Qm0 = 50.65  # Metabolic heat generation (W/m^3)
 Tb = 37  # Temperature of arterial blood (°C)
 T0 = 37  # Initial temperature of the body (°C)
 Tl = 37  # Temperature of Tissue (°C)
-Tw = 100  # Fixed temperature at left and bottom boundary
+Tw = 100 # Fixed temperature at left and bottom boundary
 Tw0 = 37
 Lx = 0.05  # Length of the skin tissue in x direction (m)
 Ly = 0.05  # Length of the skin tissue in y direction (m)
 dx = 0.01  # Space step in x direction (m)
 dy = 0.01  # Space step in y direction (m)
 dt = 0.1  # Time step (s)
-wall_temp_duration = 5  # Number of Wall Temperature 'ON' time steps
-remove_wall_after = False  # Remove Wall if True, disables fourth boundary condition on boundary border
-fourth_boundary_on = True
+wall_temp_duration = 50 # Number of Wall Temperature 'ON' time steps
+remove_wall_after = True # Remove Wall if True, disables fourth boundry condition on boundry border
+fourth_boundary_on = False
 time_steps = 300  # Number of time steps
 tau_q = 600  # Relaxation time due to heat flux (s)
 tau_T = 300  # Relaxation time due to temperature gradient (s)
-tau_v = 100  # Relaxation time due to thermal displacement (s) 
-ambient_temp = 37  # Ambient temperature of space without initialized wall temp (°C)
+tau_v = 100  # Relaxation time due to thermal displacement (s)
+ambient_temp = 37 # Ambient temperature of space without initialized wall temp (°C)
 
 # Constants for the second material (assuming for the boundary condition of fourth kind)
-ku = 0.7  # Thermal conductivity of left material (W/m°C)
+ku = 0.625  # Thermal conductivity of left material (W/m°C)
+
 
 DOI_1 = 'https://doi.org/10.1016/j.ijthermalsci.2022.108002'
 
@@ -149,18 +150,21 @@ for idx, k in enumerate(k_list):
             
         # Robin boundary condition on all boundaries (convective)
         if t >= wall_temp_duration and remove_wall_after is True:
+            print("both off - third")
             third_boundary(T_new)
 
         elif t >= wall_temp_duration and remove_wall_after is False:
+            print("off- fourth")
             fourth_boundary(T_new)
 
-        # Apply 4th boundary condition at boundary border between wall and tissue
+        # Apply 4th boundry condition at boundry border between wall and tissue
         elif t < wall_temp_duration or remove_wall_after is False:
+            print("on-fourth")
             fourth_boundary(T_new)
 
-        # Reapply fixed temperature boundary condition at each time step
-        if t < wall_temp_duration:
-            wall_boundary(T_new, Tw)
+        elif t < wall_temp_duration or remove_wall_after is True:
+            print("on-third")
+            third_boundary(T_new)
 
         # Update temperature
         T = T_new.copy()
