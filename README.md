@@ -52,11 +52,14 @@ $$
 \right)
 =
 \left[
-k^{*} + (k+k^{*}\tau_v)\frac{\partial}{\partial t}
+k^{*}
++ (k + k^{*}\tau_v)\frac{\partial}{\partial t}
 + k\tau_T \frac{\partial^2}{\partial t^2}
 \right]
 \left(
-\frac{\partial^2 T}{\partial x^2}+\frac{\partial^2 T}{\partial y^2}
+\frac{\partial^2 T}{\partial x^2}
++
+\frac{\partial^2 T}{\partial y^2}
 \right)
 $$
 
