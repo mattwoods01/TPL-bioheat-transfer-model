@@ -1,222 +1,189 @@
-# Improved Three-Phase Lag Bio-Heat Transfer Model for Human Tissue
+# An Improved Three-Phase Lag Model for Heat Transfer in Human Tissue
 
-This repository presents an enhanced **three-phase lag (TPL) bio-heat transfer model** for simulating thermal transport in human skin tissue during **cryosurgery** and **heat-based ablation therapies**. The model extends classical bio-heat formulations by incorporating multiple thermal relaxation times, physiological heat sources, evaporative cooling due to sweating, and an improved boundary formulation for conduction between dissimilar materials.
-
-The work is based on and extends the three-phase lag model proposed by Kumar and Kaur (2023), with additional physiological and boundary-condition refinements.
-
----
-
-## Abstract
-
-Cryosurgical and heat-induced ablation techniques rely on precise thermal control to induce localized tissue necrosis while minimizing collateral damage. Classical Fourier-based heat transfer models fail to capture delayed thermal responses in heterogeneous biological tissues. This work implements a three-phase lag bio-heat transfer model incorporating relaxation times associated with heat flux, temperature gradient, and thermal displacement. Additional improvements include evaporative cooling due to sweat and a fourth-kind boundary condition enabling continuous temperature and heat flux across interfaces with differing thermal conductivities. Numerical simulations demonstrate improved prediction of transient temperature profiles and boundary-driven heat dissipation.
+**Authors:** Matthew Woods (m3woods@ucsd.edu), Alon Pavlov (alpavlov@ucsd.edu)  
+**Source:** Project report PDF :contentReference[oaicite:0]{index=0}
 
 ---
 
-## Background
+## Overview
 
-Thermal therapies such as cryosurgery and hyperthermia-based ablation offer minimally invasive alternatives to conventional surgery. However, accurate prediction of tissue temperature evolution remains challenging due to tissue heterogeneity, blood perfusion, and transient boundary effects. To address these limitations, non-Fourier heat conduction models introduce finite thermal response times that better represent biological heat transport.
+This repository documents and implements an improved **three-phase lag (TPL)** bio-heat transfer model for epidermal skin tissue, motivated by applications in **cryosurgery** (extreme cooling) and **heat ablation** (extreme heating). The work extends classical Fourier conduction by introducing multiple relaxation times and evaluates how boundary conditions (including a **fourth-kind/mixed interface condition**) alter predicted temperature profiles and spatial gradients in tissue.
+
+Key additions explored:
+- **Evaporative cooling of sweat** integrated into the energy balance formulation.
+- **Fourth-kind boundary condition** to model conduction across an interface between two materials with different thermal conductivities.
 
 ---
 
-## Governing Equations
+## Model Background
 
-### Classical Fourier Heat Conduction
-
+### Fourier’s Law (Classical)
 \[
-\mathbf{q}(\mathbf{r},t) = -k \nabla T(\mathbf{r},t)
+\vec{q}(\mathbf{r},t) = -k \nabla T(\mathbf{r},t)
 \]
+where \( \vec{q} \) is heat flux, \( k \) thermal conductivity, and \( T \) temperature :contentReference[oaicite:1]{index=1}.
 
-where  
-- \( \mathbf{q} \) is the heat flux vector  
-- \( k \) is thermal conductivity  
-- \( T \) is temperature  
-
----
-
-### Dual-Phase Lag (DPL) Model
-
+### Dual-Phase Lag (DPL) (Tzou)
 \[
-\mathbf{q}(\mathbf{r}, t + \tau_q) = -k \nabla T(\mathbf{r}, t + \tau_T)
+\vec{q}(\mathbf{r}, t+\tau_q) = -k \nabla T(\mathbf{r},t)
 \]
+A lag is introduced between applied temperature gradient and resulting heat flux via relaxation time \( \tau_q \) :contentReference[oaicite:2]{index=2}.
 
-where  
-- \( \tau_q \) is the heat flux relaxation time  
-- \( \tau_T \) is the temperature gradient relaxation time  
+### Three-Phase Lag (TPL) Bio-Heat Model (Kumar & Kaur)
 
----
-
-### Bio-Heat Energy Balance Equation
+The report combines the lagged conduction form with an energy balance including perfusion and metabolism to yield the TPL expression (as presented in the report):
 
 \[
-\rho c \frac{\partial T}{\partial t}
+\left(1+\tau_q \frac{\partial}{\partial t}\right)
+\left(
+\rho c \frac{\partial^2 T}{\partial t^2} - \dot{Q}_b - \dot{Q}_m
+\right)
 =
-\nabla \cdot (k \nabla T)
-+
-\dot{Q}_b
-+
-\dot{Q}_m
+\left(
+k^* + (k + k^*\tau_v)\frac{\partial}{\partial t}
++ k\tau_T \frac{\partial^2}{\partial t^2}
+\right)
+\left(
+\frac{\partial^2 T}{\partial x^2} + \frac{\partial^2 T}{\partial y^2}
+\right)
 \]
-
-where  
-- \( \rho \) is tissue density  
-- \( c \) is specific heat  
-- \( \dot{Q}_b \) is blood perfusion heat generation  
-- \( \dot{Q}_m \) is metabolic heat generation  
+with tissue density \( \rho \), specific heat \( c \), perfusion heat term \( \dot{Q}_b \), metabolic term \( \dot{Q}_m \), and lag parameters \( \tau_q, \tau_T, \tau_v \) :contentReference[oaicite:3]{index=3}.
 
 ---
 
-### Three-Phase Lag Bio-Heat Model
+## Initial and Symmetry Conditions
 
+Initial conditions:
 \[
-\left(1 + \tau_q \frac{\partial}{\partial t}\right)
-\left[
-\rho c \frac{\partial^2 T}{\partial t^2}
--
-\dot{Q}_b
--
-\dot{Q}_m
-\right]
-=
-\left[
-k^* + (k + k^* \tau_v)\frac{\partial}{\partial t}
-+ k \tau_T \frac{\partial^2}{\partial t^2}
-\right]
-\nabla^2 T
+T(x,y,0)=T_w,\quad
+\frac{\partial T(x,y,0)}{\partial t}=0,\quad
+\frac{\partial^2 T(x,y,0)}{\partial t^2}=0
 \]
+:contentReference[oaicite:4]{index=4}.
 
-where  
-- \( \tau_v \) is the thermal displacement relaxation time  
-- \( k^* \) is a higher-order thermal conductivity coefficient  
-
----
-
-## Evaporative Cooling Due to Sweating
-
-Heat loss from sweat evaporation is modeled as:
-
+Symmetry (zero gradient) conditions:
 \[
-\dot{Q}_{sweat} =
-\frac{S_i (P_{sk} - P_e)}{R_{va}}
+-k\frac{\partial T(x,L,t)}{\partial x}=0,\quad
+-k\frac{\partial T(L,y,t)}{\partial y}=0
 \]
-
-where  
-- \( S_i \) is the skin surface area  
-- \( P_{sk} \) is the water vapor pressure at the skin surface  
-- \( P_e \) is the environmental vapor pressure  
-- \( R_{va} \) is the water vapor resistance of the air layer  
-
-Sweat evaporation is activated only when skin temperature exceeds a physiological threshold of approximately **37.38 °C**.
+:contentReference[oaicite:5]{index=5}.
 
 ---
 
 ## Boundary Conditions
 
-### First Kind (Dirichlet)
+The report states a general boundary form:
+\[
+A_1\frac{\partial T(0,y,t)}{\partial x}+B_1 T(0,y,t)=f_1(y,t)
+\]
+\[
+A_2\frac{\partial T(x,0,t)}{\partial y}+B_2 T(x,0,t)=f_2(x,t)
+\]
+:contentReference[oaicite:6]{index=6}.
 
+### 1) Dirichlet (First Kind)
+Constant boundary temperature:
 \[
 T = T_w
 \]
+Parameterization in report:
+- \(A_1=0, B_1=1, f_1=T_w\)
+- \(A_2=0, B_2=1, f_2=T_w\) :contentReference[oaicite:7]{index=7}.
 
-Represents constant-temperature probes used in cryosurgery.
-
----
-
-### Second Kind (Neumann)
-
+### 2) Neumann (Second Kind)
+Constant heat flux:
 \[
--k \frac{\partial T}{\partial n} = q_w
+-k\frac{\partial T}{\partial n}=q_w
 \]
+Parameterization in report:
+- \(A_1=-k, B_1=0, f_1=q_w\)
+- \(A_2=-k, B_2=0, f_2=q_w\) :contentReference[oaicite:8]{index=8}.
 
-Models constant heat flux sources such as lasers or microwave applicators.
-
----
-
-### Third Kind (Robin)
-
+### 3) Robin (Third Kind)
+Convective exchange:
 \[
--k \frac{\partial T}{\partial n} = h (T - T_p)
+-k\frac{\partial T}{\partial n}=h(T-T_p)
 \]
+Parameterization in report:
+- \(A_1=-k, B_1=h, f_1=hT_p\)
+- \(A_2=-k, B_2=h, f_2=hT_p\) :contentReference[oaicite:9]{index=9}.
 
-Represents convective heat exchange with the surrounding environment.
+### 4) Fourth Kind (Mixed Interface Condition) — Added in This Project
 
----
-
-### Fourth Kind (Mixed / Conductive Interface)
+Used to model an interface between two materials with different conductivities \(k_u\) and \(k_v\) and temperatures \(u\) and \(v\):
 
 \[
-T_u(0,t) = T_v(0,t)
+u(0,t)=v(0,t),\quad t\in[0,t^*)
 \]
-
 \[
--k_u \frac{\partial T_u}{\partial x}
+-k_u\frac{\partial u}{\partial x}\bigg|_{x=0}
 =
--k_v \frac{\partial T_v}{\partial x}
+-k_v\frac{\partial v}{\partial x}\bigg|_{x=0},\quad t\in[0,t^*)
 \]
+:contentReference[oaicite:10]{index=10}.
 
-This boundary condition enforces continuity of both temperature and heat flux across a shared boundary between materials with different thermal conductivities.
+This was implemented via finite difference approximations at the tissue–wall interface (shared boundary).
 
 ---
 
-## Numerical Methodology
+## Improvement 1: Evaporative Cooling Term
 
-- **Spatial domain:** 5 cm × 5 cm 2D skin tissue patch  
-- **Discretization:** Finite difference method  
-- **Time integration:** Explicit time stepping  
-- **Initial conditions:**
+Evaporative heat loss due to sweat is modeled as:
 \[
-T(x,y,0) = T_w,\quad
-\frac{\partial T}{\partial t}\bigg|_{t=0} = 0
+\dot{Q}_{sweat}=\frac{S_i(P_{sk}-P_e)}{R_{va}}
 \]
-
-- **Symmetry:** Zero-flux Neumann boundaries on non-heated edges  
-
-Simulations were implemented in **Python** for temperature evolution and heatmaps, with **MATLAB** used for evaporative cooling analysis.
-
----
-
-## Experiments
-
-Three heating scenarios were evaluated:
-
-| Experiment | Boundary Condition | Conductive Wall |
-|----------|-------------------|----------------|
-| A | Robin (3rd) | No |
-| B | Dirichlet (1st) | Yes |
-| C | Mixed (4th) | Yes |
-
-Thermal conductivity values tested:
-
+with
 \[
-k = \{0.3,\;0.625,\;1.0,\;1.5\}\;\text{W/m·°C}
+R_{va}=\frac{2430\cdot 1000}{0.1353\sqrt{0.11+0.45V_w+V_e}}
 \]
+\[
+P_{sk}=
+\frac{(m_{rsw}R_{esk}R_{va})+(P_{sat}T_{sk}R_{va})+(P_eR_{esk})}{R_{esk}+R_{va}}
+\]
+:contentReference[oaicite:11]{index=11}.
 
-Heating was applied for 5 s at 100 °C, followed by passive cooling.
-
----
-
-## Results Summary
-
-- Mixed (fourth-kind) boundary conditions produced faster post-heating cooling and more realistic surface temperature curvature.
-- Dirichlet boundaries consistently overestimated tissue temperature.
-- Lower thermal conductivity resulted in steeper thermal gradients.
-- Evaporative cooling had minimal impact at small surface areas but becomes significant under higher vapor resistance or larger exposed regions.
-
----
-
-## Conclusion
-
-Incorporating a fourth-kind boundary condition and three-phase lag dynamics significantly improves bio-heat transfer modeling accuracy near tissue interfaces. The enhanced model better captures transient heat dissipation and interfacial conduction effects relevant to cryosurgery, hyperthermia therapy, and burn prediction.
+The energy balance form becomes:
+\[
+(\dots -\dot{Q}_b-\dot{Q}_m+\dot{Q}_{sweat}) = \dots
+\]
+(as shown in Eq. (20) in the report) :contentReference[oaicite:12]{index=12}.
 
 ---
 
-## References
+## Experimental Design (As Reported)
 
-A full list of references is provided in the accompanying project report, including foundational works by Pennes (1948), Tzou (2014), and Kumar & Kaur (2023).
+Three experiments were run for a 2D \(5\times 5\) cm tissue patch with heating applied for 5 s and total simulation time 10 s:
+
+| Experiment | Shared Boundary Type | Wall Used | 4th BC Used | Heat On (s) | Total (s) |
+|---|---:|---:|---:|---:|---:|
+| A: Timed Convection | 3rd (Robin) | No | No | 5 | 10 |
+| B: Timed Direct     | 1st (Dirichlet) | Yes | No | 5 | 10 |
+| C: Timed Conduction | 4th (Mixed) | Yes | Yes | 5 | 10 |
+
+:contentReference[oaicite:13]{index=13}.
+
+Thermal conductivities tested:
+\[
+k \in \{0.3,\ 0.625,\ 1.0,\ 1.5\}\ \text{W/m°C}
+\]
+with wall conductivity \(k_u=0.625\ \text{W/m°C}\) :contentReference[oaicite:14]{index=14}.
 
 ---
 
-## Author
+## Reported Results (Summary)
 
-**Matthew Woods**  
-M.S. Bioengineering, UC San Diego  
-Email: m3woods@ucsd.edu
+- The Robin/shared convection case cools fastest.
+- The 4th boundary condition shows a sharper temperature drop immediately after wall heating stops (visible near ~5.5 s) compared to Dirichlet, suggesting improved capture of post-heating conduction into the wall.
+- Spatial distributions differ: Dirichlet produces more linear gradients; 4th-kind produces curvature near the shared boundary consistent with conduction into a second material.
+
+:contentReference[oaicite:15]{index=15}.
+
+Evaporative cooling was found to be negligible under the chosen small-area conditions because \( \dot{Q}_{sweat} \) was small relative to perfusion and metabolic heat terms :contentReference[oaicite:16]{index=16}.
+
+---
+
+## Parameters Used (From Report)
+
+Selected parameters (see Table 2 in report for full list) :contentReference[oaicite:17]{index=17}:
+- \( \rho = 1000\ \text{kg/m}^3 \)
+- \( c = 4000\ \text{J/kg°
