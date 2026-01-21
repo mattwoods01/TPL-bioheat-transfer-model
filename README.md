@@ -47,12 +47,20 @@ Several boundary interaction cases were investigated:
 
 A key contribution of this work is the inclusion of a mixed boundary condition that enforces continuity of both temperature and heat flux across a shared interface, enabling more realistic modeling of skin in contact with external objects or surgical tools.
 
+<img width="1811" height="500" alt="image" src="https://github.com/user-attachments/assets/575516b1-8cb7-4a59-a1d2-84be0be88564" />
+
+<img width="1733" height="1158" alt="image" src="https://github.com/user-attachments/assets/9f098fb6-a06c-4a8b-b4c2-0fc9c9c0c480" />
+
 ---
 
 ## Evaporative Cooling Modeling
 A simplified physiological model of sweating was incorporated to examine heat loss due to evaporation at the skin surface. The model evaluates how skin temperature, air resistance, and sweating rate influence evaporative heat loss.
 
 Under the tested conditions and surface area, evaporative cooling was found to have a relatively small effect compared to metabolic heat production and blood perfusion. However, the framework allows for future expansion to larger surface areas and different environmental conditions.
+
+<img width="984" height="893" alt="image" src="https://github.com/user-attachments/assets/3e6fccec-806f-4a0c-a8ed-3b3734963a92" />
+
+<img width="1013" height="691" alt="image" src="https://github.com/user-attachments/assets/f38d4cf6-071b-4c4f-a29c-f358a80309fc" />
 
 ---
 
