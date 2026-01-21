@@ -170,3 +170,46 @@ $$
 \left(
 \rho c \frac{\partial^2 T}{\partial t^2}
 -\dot{Q}_b
+-\dot{Q}_m
++\dot{Q}_{sweat}
+\right)
+=
+\left[
+k^{*} + (k+k^{*}\tau_v)\frac{\partial}{\partial t}
++ k\tau_T \frac{\partial^2}{\partial t^2}
+\right]
+\left(
+\frac{\partial^2 T}{\partial x^2}+\frac{\partial^2 T}{\partial y^2}
+\right)
+$$
+
+:contentReference[oaicite:9]{index=9}
+
+---
+
+## Model Enhancement 2: Fourth-Kind Boundary Condition (Conductive Interface)
+
+Continuous temperature at the interface:
+
+$$
+u(0,t)=v(0,t),
+\qquad t\in[0,t^*)
+$$
+
+Continuous heat flux across the interface:
+
+$$
+-k_u\left.\frac{\partial u(x,t)}{\partial x}\right|_{x=0}
+=
+-k_v\left.\frac{\partial v(x,t)}{\partial x}\right|_{x=0},
+\qquad t\in[0,t^*)
+$$
+
+:contentReference[oaicite:10]{index=10}
+
+---
+
+## References
+
+Key source implemented/extended in this report:  
+Kumar, Mukesh, et al. “Mathematical Modelling and Simulation of Three Phase Lag Bio-Heat Transfer Model during Cancer Treatment.” *International Journal of Thermal Sciences*, 2023. :contentReference[oaicite:11]{index=11}
