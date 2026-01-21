@@ -90,3 +90,83 @@ $$
 \qquad
 -k\frac{\partial T(L,y,t)}{\partial y}=0
 $$
+
+:contentReference[oaicite:4]{index=4}
+
+---
+
+## Boundary Conditions
+
+A general boundary form (as stated in the report) is:
+
+$$
+A_1 \frac{\partial T(0,y,t)}{\partial x} + B_1 T(0,y,t) = f_1(y,t)
+$$
+
+$$
+A_2 \frac{\partial T(x,0,t)}{\partial y} + B_2 T(x,0,t) = f_2(x,t)
+$$
+
+:contentReference[oaicite:5]{index=5}
+
+### 1) First Kind (Dirichlet: Constant Temperature)
+
+$$
+A_1=0,\;B_1=1,\;f_1(y,t)=T_w,
+\qquad
+A_2=0,\;B_2=1,\;f_2(x,t)=T_w
+$$
+
+:contentReference[oaicite:6]{index=6}
+
+### 2) Second Kind (Neumann: Constant Heat Flux)
+
+$$
+A_1=-k,\;B_1=0,\;f_1(y,t)=q_w,
+\qquad
+A_2=-k,\;B_2=0,\;f_2(x,t)=q_w
+$$
+
+:contentReference[oaicite:7]{index=7}
+
+### 3) Third Kind (Robin: Convection)
+
+$$
+A_1=-k,\;B_1=h,\;f_1(y,t)=hT_p,
+\qquad
+A_2=-k,\;B_2=h,\;f_2(x,t)=hT_p
+$$
+
+:contentReference[oaicite:8]{index=8}
+
+---
+
+## Model Enhancement 1: Evaporative Cooling (Sweat)
+
+Heat loss due to evaporation:
+
+$$
+\dot{Q}_{sweat}=\frac{S_i\left(P_{sk}-P_e\right)}{R_{va}}
+$$
+
+Air-layer vapor resistance (as written in the report):
+
+$$
+R_{va}=\frac{2430\cdot 1000}{0.1353\cdot 0.11 + 0.45V_w + V_e}
+$$
+
+Skin vapor pressure:
+
+$$
+P_{sk}=
+\frac{\left(m_{rsw}R_{esk}R_{va}\right)+\left(P_{sat}T_{sk}R_{va}\right)+\left(P_eR_{esk}\right)}
+{R_{esk}+R_{va}}
+$$
+
+TPL equation with sweat term:
+
+$$
+\left(1+\tau_q \frac{\partial}{\partial t}\right)
+\left(
+\rho c \frac{\partial^2 T}{\partial t^2}
+-\dot{Q}_b
