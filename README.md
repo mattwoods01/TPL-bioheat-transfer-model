@@ -1,212 +1,243 @@
-# An Improved Three‑Phase Lag Bio‑Heat Transfer Model
+# An Improved Three-Phase Lag Bio-Heat Transfer Model for Human Tissue
 
-This repository contains the implementation, experiments, and analysis for an **improved three‑phase lag (TPL) bio‑heat transfer model** applied to human skin tissue. The model extends classical and dual‑phase lag formulations to better simulate heat transfer during **cryosurgery** and **heat‑based ablation** procedures.
-
----
-
-## Overview
-
-Thermal therapies such as cryosurgery and heat ablation rely on precise control of temperature distributions in tissue. Classical Fourier‑based bio‑heat models often fail to capture transient and heterogeneous thermal behavior observed in real tissue.
-
-This project builds upon the three‑phase lag bio‑heat model by:
-
-* Incorporating **three relaxation times** (heat flux, temperature gradient, and thermal displacement)
-* Supporting **multiple boundary condition types** (Dirichlet, Neumann, Robin)
-* Introducing a **fourth (mixed) boundary condition** to model conduction between materials with different thermal conductivities
-* Adding **evaporative cooling due to sweating** to the energy balance equation
-
-The goal is to improve physical realism and predictive accuracy for biomedical thermal simulations.
+**Matthew Woods** (m3woods@ucsd.edu)  
+**Alon Pavlov** (alpavlov@ucsd.edu)
 
 ---
 
-## Key Features
+## Abstract
 
-* **Three‑Phase Lag Bio‑Heat Equation**
+Cryosurgery and heat-based ablation techniques rely on precise thermal control to induce localized tissue necrosis while minimizing damage to surrounding healthy tissue. Classical bio-heat models based on Fourier’s law often fail to capture transient thermal behavior in heterogeneous biological media.  
 
-  * Accounts for delayed heat propagation in heterogeneous tissue
-  * Extends Pennes’ bio‑heat equation and dual‑phase lag models
+This project implements and extends the **three-phase lag (TPL) bio-heat transfer model**, originally proposed by Kumar and Kaur, by introducing:  
+1. **Evaporative cooling due to sweat**, and  
+2. **A fourth-kind (mixed) boundary condition** accounting for conductive heat transfer between materials with differing thermal conductivities.
 
-* **Boundary Condition Support**
-
-  * **1st kind (Dirichlet):** constant temperature
-  * **2nd kind (Neumann):** constant heat flux
-  * **3rd kind (Robin):** convective heat transfer
-  * **4th kind (Mixed):** continuous temperature *and* heat flux across materials
-
-* **Evaporative Cooling Model**
-
-  * Includes sweat evaporation above a physiological temperature threshold
-  * Captures effects of air resistance, sweating rate, and skin temperature
-
-* **Finite Difference Numerical Solver**
-
-  * 2D spatial discretization of skin tissue
-  * Time‑dependent temperature evolution
-
-* **Python and MATLAB Implementations**
-
-  * Python: temperature profiles and 2D heat maps
-  * MATLAB: evaporative cooling analysis and comparative plots
+The enhanced model improves prediction accuracy for transient thermal behavior during cryosurgical and heat-ablation procedures, particularly near material interfaces.
 
 ---
 
-## Model Description
+## Background
 
-### Governing Equation
+Thermal therapies such as **cryosurgery** and **heat ablation** offer minimally invasive alternatives to traditional surgical excision. Their effectiveness depends on accurate modeling of heat transport in tissue, which is influenced by:
 
-q(r,t) = -k ∇T(r,t)
+- Blood perfusion  
+- Metabolic heat generation  
+- Tissue heterogeneity  
+- Boundary interactions with surgical instruments  
 
-The three‑phase lag bio‑heat equation integrates:
+Classical Fourier heat conduction assumes instantaneous propagation of thermal signals, which is insufficient for biological tissues exhibiting delayed thermal responses. Phase-lag models address this limitation.
 
-* Conduction
-* Blood perfusion heat transfer
-* Metabolic heat generation
-* Optional evaporative heat loss
+---
 
-Three relaxation times are used:
+## Governing Equations
 
-* `τq` – heat flux relaxation
-* `τT` – temperature gradient relaxation
-* `τv` – thermal displacement relaxation
+### Fourier Heat Conduction (Classical)
 
-This formulation better captures transient thermal responses compared to classical Fourier models.
+\[
+\vec{q}(\mathbf{r}, t) = -k \nabla T(\mathbf{r}, t)
+\]
+
+where  
+- \( \vec{q} \) is heat flux  
+- \( k \) is thermal conductivity  
+- \( T \) is temperature  
+
+---
+
+### Dual-Phase Lag (DPL) Model
+
+To incorporate finite thermal response times, Tzou introduced relaxation delays:
+
+\[
+\vec{q}(\mathbf{r}, t + \tau_q) = -k \nabla T(\mathbf{r}, t + \tau_T)
+\]
+
+where  
+- \( \tau_q \): heat-flux relaxation time  
+- \( \tau_T \): temperature-gradient relaxation time  
+
+---
+
+### Three-Phase Lag Bio-Heat Equation
+
+By coupling the DPL formulation with the bio-heat energy balance equation, the **three-phase lag (TPL)** model is obtained:
+
+\[
+\left(1 + \tau_q \frac{\partial}{\partial t}\right)
+\left(
+\rho c \frac{\partial^2 T}{\partial t^2}
+- \dot{Q}_b
+- \dot{Q}_m
+\right)
+=
+\left[
+k^*
++ (k + k^* \tau_v)\frac{\partial}{\partial t}
++ k \tau_T \frac{\partial^2}{\partial t^2}
+\right]
+\nabla^2 T
+\]
+
+where  
+
+| Symbol | Description |
+|------|-------------|
+| \( \rho \) | Tissue density |
+| \( c \) | Specific heat capacity |
+| \( \dot{Q}_b \) | Blood perfusion heat |
+| \( \dot{Q}_m \) | Metabolic heat generation |
+| \( \tau_v \) | Thermal displacement relaxation |
+| \( k^* \) | Modified thermal conductivity |
+
+---
+
+## Initial Conditions
+
+\[
+T(x,y,0) = T_w
+\]
+
+\[
+\frac{\partial T(x,y,0)}{\partial t} = 0
+\]
+
+\[
+\frac{\partial^2 T(x,y,0)}{\partial t^2} = 0
+\]
+
+Symmetry conditions:
+
+\[
+\frac{\partial T(x,L,t)}{\partial x} = 0, \quad
+\frac{\partial T(L,y,t)}{\partial y} = 0
+\]
 
 ---
 
 ## Boundary Conditions
 
-| Type            | Description                   | Application                       |
-| --------------- | ----------------------------- | --------------------------------- |
-| 1st (Dirichlet) | Constant temperature          | Direct heating / cryogenic probes |
-| 2nd (Neumann)   | Constant heat flux            | Laser / RF ablation               |
-| 3rd (Robin)     | Convective boundary           | Heat exchange with environment    |
-| 4th (Mixed)     | Continuous temperature & flux | Conduction between materials      |
+### First Kind (Dirichlet — Constant Temperature)
 
-The **fourth boundary condition** is a major contribution of this work, allowing realistic simulation of tissue in contact with materials of differing thermal conductivity.
+\[
+T = T_w
+\]
+
+Used to model cryosurgical probes maintaining a fixed temperature.
 
 ---
 
-## Experiments
+### Second Kind (Neumann — Constant Heat Flux)
 
-Three experiments were performed using a 5×5 cm skin tissue domain:
+\[
+-k \frac{\partial T}{\partial n} = q_w
+\]
 
-1. **Timed Convection**
+Models energy-controlled heat ablation sources (e.g., lasers).
 
-   * Robin boundary condition
-   * Simulates convective heat loss
+---
 
-2. **Timed Direct Heating**
+### Third Kind (Robin — Convective Heat Transfer)
 
-   * Dirichlet boundary condition
-   * Fixed wall temperature
+\[
+-k \frac{\partial T}{\partial n} = h (T - T_p)
+\]
 
-3. **Timed Conduction**
+Accounts for convection between tissue and surrounding environment.
 
-   * Fourth boundary condition
-   * Models conduction to a second material
+---
 
-Each experiment applies heating for 5 s followed by cooling, analyzing temperature profiles and spatial distributions.
+### Fourth Kind (Mixed — Conductive Interface)
+
+Introduced in this work to model **two materials with different thermal conductivities**:
+
+\[
+u(0,t) = v(0,t)
+\]
+
+\[
+-k_u \frac{\partial u}{\partial x} = -k_v \frac{\partial v}{\partial x}
+\]
+
+This boundary condition enables realistic simulation of tissue–instrument conduction.
+
+---
+
+## Model Enhancements
+
+### 1. Evaporative Cooling from Sweat
+
+Heat loss due to sweat evaporation is modeled as:
+
+\[
+\dot{Q}_{sweat} =
+\frac{S_i (P_{sk} - P_e)}{R_{va}}
+\]
+
+where  
+- \( S_i \): skin surface area  
+- \( P_{sk} \): skin vapor pressure  
+- \( P_e \): environmental pressure  
+- \( R_{va} \): vapor resistance of air layer  
+
+The energy balance equation becomes:
+
+\[
+\left(1 + \tau_q \frac{\partial}{\partial t}\right)
+\left(
+\rho c \frac{\partial^2 T}{\partial t^2}
+- \dot{Q}_b
+- \dot{Q}_m
++ \dot{Q}_{sweat}
+\right)
+= \dots
+\]
+
+---
+
+### 2. Improved Conductive Boundary Modeling
+
+The fourth-kind boundary condition enables heat transfer across materials with unequal \( k \), improving prediction of cooling rates once thermal sources are removed.
+
+---
+
+## Numerical Methods
+
+- Finite Difference Method (FDM)  
+- Dimensionless transformation  
+- Time-marching explicit scheme  
+- Implemented in **Python** and **MATLAB**
 
 ---
 
 ## Results Summary
 
-* Convection boundaries produce the fastest cooling
-
-* Fourth‑boundary conduction shows:
-
-  * Faster initial temperature decline
-  * More realistic heat dissipation after heating stops
-  * Radial temperature gradients near the shared boundary
-
-* Thermal conductivity strongly influences peak temperature and cooling rate
-
-* Evaporative cooling has **minimal impact** under the tested conditions but provides a more physiologically complete model
+- Fourth-kind boundary condition produces **faster initial cooling** and more realistic heat dissipation.
+- Lower tissue thermal conductivity yields steeper temperature gradients.
+- Evaporative cooling has minimal impact under small surface-area assumptions.
+- Conductive interfaces significantly affect transient temperature profiles.
 
 ---
 
-## Code Structure
+## Conclusion
 
-### Python
-
-* Solves the 2D three‑phase lag equation
-* Generates:
-
-  * Temperature vs. time plots
-  * 2D heat maps for different thermal conductivities
-* Uses NumPy and Matplotlib
-
-### MATLAB
-
-* Analyzes evaporative cooling effects
-* Compares heat loss vs:
-
-  * Skin temperature
-  * Sweating rate
-  * Air vapor resistance
-
----
-
-## Requirements
-
-### Python
-
-* Python ≥ 3.8
-* NumPy
-* Matplotlib
-
-### MATLAB
-
-* MATLAB R2020+ recommended
-
----
-
-## How to Run
-
-### Python
-
-1. Install dependencies
-2. Run the simulation script
-3. Generated plots will be saved to disk
-
-### MATLAB
-
-1. Open the provided `.m` files
-2. Run individual sections to generate figures
-
----
-
-## Applications
-
-* Cryosurgery planning
-* Thermal ablation modeling
-* Burn and hyperthermia prediction
-* Biomedical heat transfer research
-
----
-
-## Future Work
-
-* Multi‑layer tissue modeling (epidermis, dermis, fat)
-* Larger surface area evaporation effects
-* Patient‑specific parameterization
-* GPU‑accelerated solvers
-
----
-
-## Authors
-
-* **Matthew Woods** – [m3woods@ucsd.edu](mailto:m3woods@ucsd.edu)
-* **Alon Pavlov** – [alpavlov@ucsd.edu](mailto:alpavlov@ucsd.edu)
+This work extends the three-phase lag bio-heat model by incorporating evaporative cooling and a fourth-kind boundary condition. While sweat evaporation contributes minimally under controlled conditions, conductive boundary modeling substantially improves realism. These enhancements improve predictive accuracy for thermal therapies such as cryosurgery and heat ablation.
 
 ---
 
 ## References
 
-Key references include work by Kumar & Kaur on three‑phase lag bio‑heat transfer, Pennes’ bio‑heat equation, and prior studies on evaporative cooling and conduction boundary conditions.
+Key reference used throughout this implementation:  
+Kumar & Kaur, *International Journal of Thermal Sciences*, 2023.  
+:contentReference[oaicite:0]{index=0}
 
 ---
 
-## License
+## Repository Notes
 
-This project is intended for academic and research use.
+- Equations are LaTeX-compatible for GitHub rendering  
+- Code implementations available in Python and MATLAB  
+- Figures reproduce temperature profiles and spatial distributions  
+
+---
+
