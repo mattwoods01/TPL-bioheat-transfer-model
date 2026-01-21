@@ -1,218 +1,90 @@
-# An Improved Three-Phase Lag Bio-Heat Transfer Model for Human Tissue
-
-Matthew Woods (m3woods@ucsd.edu)  
-Alon Pavlov (alpavlov@ucsd.edu)
-
-> **NOTE (GitHub Math):** GitHub renders LaTeX only with `$...$` (inline) and `$$...$$` (block).  
-> Do **NOT** use `\[` `\]`. Keep **blank lines** before/after each `$$...$$` block.
-
----
+# Improved Three-Phase Lag Bio-Heat Transfer Model for Human Tissue
 
 ## Abstract
-
-Cryosurgery and heat-based ablation rely on precise thermal control to induce localized tissue necrosis while minimizing damage to surrounding tissue. Classical bio-heat models based on Fourier conduction often fail to capture transient behavior in heterogeneous tissue. This project implements and extends the three-phase lag (TPL) bio-heat transfer model by adding (i) evaporative cooling due to sweat and (ii) a fourth-kind boundary condition to better model conduction across two materials with different thermal conductivities. :contentReference[oaicite:0]{index=0}
-
----
-
-## Governing Equations
-
-### 1) Fourier Heat Conduction (Classical)
-
-$$
-\mathbf{q}(\mathbf{r},t) = -k \nabla T(\mathbf{r},t)
-$$
-
-- $\mathbf{q}$: heat flux vector  
-- $k$: thermal conductivity  
-- $T$: temperature field :contentReference[oaicite:1]{index=1}
+This repository presents an academic investigation into improved bio-heat transfer modeling for human skin tissue under extreme thermal conditions. The work is motivated by clinical applications such as cryosurgery and heat-based tumor ablation, where accurate prediction of temperature distribution is critical for effective treatment and damage minimization. The project extends prior three-phase lag bio-heat models by incorporating enhanced boundary interactions and physiological effects to better capture real tissue behavior during transient heating and cooling events. :contentReference[oaicite:0]{index=0}
 
 ---
 
-### 2) Dual-Phase Lag (DPL) Model
+## Background
+Thermal-based medical procedures rely on precise control of heat transfer within biological tissue. Traditional bio-heat models often assume simplified boundary conditions and homogeneous material behavior, which can lead to inaccuracies when tissue is exposed to rapid heating or cooling. In practice, tissue thermal response is influenced by blood perfusion, metabolic heat generation, environmental interaction, and contact with materials of differing thermal conductivity.
 
-$$
-\mathbf{q}(\mathbf{r}, t+\tau_q) = -k \nabla T(\mathbf{r}, t+\tau_T)
-$$
-
-- $\tau_q$: heat-flux relaxation time  
-- $\tau_T$: temperature-gradient relaxation time :contentReference[oaicite:2]{index=2}
+This project builds on established bio-heat modeling literature and focuses on improving realism by refining how boundary conditions and material interfaces are treated.
 
 ---
 
-### 3) Three-Phase Lag (TPL) Bio-Heat Model
+## Objectives
+The primary objectives of this work are:
 
-Kumar & Kaur’s three-phase lag formulation (as presented in this report) is:
-
-$$
-\left(1+\tau_q \frac{\partial}{\partial t}\right)
-\left(
-\rho c \frac{\partial^2 T}{\partial t^2}
--\dot{Q}_b
--\dot{Q}_m
-\right)
-=
-\left[
-k^{*}
-+ (k + k^{*}\tau_v)\frac{\partial}{\partial t}
-+ k\tau_T \frac{\partial^2}{\partial t^2}
-\right]
-\left(
-\frac{\partial^2 T}{\partial x^2}
-+
-\frac{\partial^2 T}{\partial y^2}
-\right)
-$$
-
-- $\rho$: tissue density  
-- $c$: tissue specific heat  
-- $\dot{Q}_b$: blood perfusion heat source  
-- $\dot{Q}_m$: metabolic heat source  
-- $\tau_v$: thermal displacement relaxation time  
-- $k^{*}$: modified conductivity term :contentReference[oaicite:3]{index=3}
+- To improve transient bio-heat transfer modeling accuracy in human skin tissue
+- To evaluate how different boundary conditions affect temperature evolution
+- To model heat conduction between tissue and adjacent materials with different thermal properties
+- To assess the influence of evaporative cooling due to sweating on tissue temperature
 
 ---
 
-## Initial and Symmetry Conditions
+## Methods Overview
+A two-dimensional numerical simulation framework was used to model heat transfer in a small patch of human skin tissue. The model incorporates physiological heat sources such as metabolic heat production and blood perfusion.
 
-$$
-T(x,y,0)=T_w
-$$
+The following methodological components were evaluated:
 
-$$
-\frac{\partial T(x,y,0)}{\partial t}=0
-$$
+- Multiple boundary condition types, including fixed temperature, convective heat transfer, and material-aware conduction boundaries
+- Time-dependent heating and cooling scenarios
+- Finite-difference numerical discretization for transient analysis
+- Comparative experiments across a range of tissue thermal conductivity values
 
-$$
-\frac{\partial^2 T(x,y,0)}{\partial t^2}=0
-$$
-
-Symmetry (zero-gradient) conditions:
-
-$$
--k\frac{\partial T(x,L,t)}{\partial x}=0,
-\qquad
--k\frac{\partial T(L,y,t)}{\partial y}=0
-$$
-
-:contentReference[oaicite:4]{index=4}
+Simulations were implemented using Python and MATLAB for numerical computation and visualization.
 
 ---
 
-## Boundary Conditions
+## Boundary Condition Analysis
+Several boundary interaction cases were investigated:
 
-A general boundary form (as stated in the report) is:
+- Direct heating with fixed surface temperature
+- Convective heat loss to the environment
+- Heat conduction across a shared boundary between skin tissue and a secondary material
 
-$$
-A_1 \frac{\partial T(0,y,t)}{\partial x} + B_1 T(0,y,t) = f_1(y,t)
-$$
-
-$$
-A_2 \frac{\partial T(x,0,t)}{\partial y} + B_2 T(x,0,t) = f_2(x,t)
-$$
-
-:contentReference[oaicite:5]{index=5}
-
-### 1) First Kind (Dirichlet: Constant Temperature)
-
-$$
-A_1=0,\;B_1=1,\;f_1(y,t)=T_w,
-\qquad
-A_2=0,\;B_2=1,\;f_2(x,t)=T_w
-$$
-
-:contentReference[oaicite:6]{index=6}
-
-### 2) Second Kind (Neumann: Constant Heat Flux)
-
-$$
-A_1=-k,\;B_1=0,\;f_1(y,t)=q_w,
-\qquad
-A_2=-k,\;B_2=0,\;f_2(x,t)=q_w
-$$
-
-:contentReference[oaicite:7]{index=7}
-
-### 3) Third Kind (Robin: Convection)
-
-$$
-A_1=-k,\;B_1=h,\;f_1(y,t)=hT_p,
-\qquad
-A_2=-k,\;B_2=h,\;f_2(x,t)=hT_p
-$$
-
-:contentReference[oaicite:8]{index=8}
+A key contribution of this work is the inclusion of a mixed boundary condition that enforces continuity of both temperature and heat flux across a shared interface, enabling more realistic modeling of skin in contact with external objects or surgical tools.
 
 ---
 
-## Model Enhancement 1: Evaporative Cooling (Sweat)
+## Evaporative Cooling Modeling
+A simplified physiological model of sweating was incorporated to examine heat loss due to evaporation at the skin surface. The model evaluates how skin temperature, air resistance, and sweating rate influence evaporative heat loss.
 
-Heat loss due to evaporation:
-
-$$
-\dot{Q}_{sweat}=\frac{S_i\left(P_{sk}-P_e\right)}{R_{va}}
-$$
-
-Air-layer vapor resistance (as written in the report):
-
-$$
-R_{va}=\frac{2430\cdot 1000}{0.1353\cdot 0.11 + 0.45V_w + V_e}
-$$
-
-Skin vapor pressure:
-
-$$
-P_{sk}=
-\frac{\left(m_{rsw}R_{esk}R_{va}\right)+\left(P_{sat}T_{sk}R_{va}\right)+\left(P_eR_{esk}\right)}
-{R_{esk}+R_{va}}
-$$
-
-TPL equation with sweat term:
-
-$$
-\left(1+\tau_q \frac{\partial}{\partial t}\right)
-\left(
-\rho c \frac{\partial^2 T}{\partial t^2}
--\dot{Q}_b
--\dot{Q}_m
-+\dot{Q}_{sweat}
-\right)
-=
-\left[
-k^{*} + (k+k^{*}\tau_v)\frac{\partial}{\partial t}
-+ k\tau_T \frac{\partial^2}{\partial t^2}
-\right]
-\left(
-\frac{\partial^2 T}{\partial x^2}+\frac{\partial^2 T}{\partial y^2}
-\right)
-$$
-
-:contentReference[oaicite:9]{index=9}
+Under the tested conditions and surface area, evaporative cooling was found to have a relatively small effect compared to metabolic heat production and blood perfusion. However, the framework allows for future expansion to larger surface areas and different environmental conditions.
 
 ---
 
-## Model Enhancement 2: Fourth-Kind Boundary Condition (Conductive Interface)
+## Results Summary
+Key findings from the simulations include:
 
-Continuous temperature at the interface:
-
-$$
-u(0,t)=v(0,t),
-\qquad t\in[0,t^*)
-$$
-
-Continuous heat flux across the interface:
-
-$$
--k_u\left.\frac{\partial u(x,t)}{\partial x}\right|_{x=0}
-=
--k_v\left.\frac{\partial v(x,t)}{\partial x}\right|_{x=0},
-\qquad t\in[0,t^*)
-$$
-
-:contentReference[oaicite:10]{index=10}
+- Convective boundary conditions result in the fastest cooling rates
+- Mixed (material-aware) boundary conditions produce more realistic post-heating temperature decay
+- Lower thermal conductivity leads to steeper spatial temperature gradients
+- Ignoring material-to-material conduction can overestimate tissue temperature
+- Evaporative cooling contributes minimally at small spatial scales but may be relevant in broader applications
 
 ---
 
-## References
+## Significance
+Accurate bio-heat modeling is essential for predicting tissue damage in medical procedures involving extreme temperatures. The improvements presented in this project enhance predictive capability by accounting for realistic boundary interactions and material properties. These refinements can inform safer device design, improved treatment planning, and better interpretation of thermal injury risk.
 
-Key source implemented/extended in this report:  
-Kumar, Mukesh, et al. “Mathematical Modelling and Simulation of Three Phase Lag Bio-Heat Transfer Model during Cancer Treatment.” *International Journal of Thermal Sciences*, 2023. :contentReference[oaicite:11]{index=11}
+---
+
+## Repository Contents
+- Python simulation scripts for transient bio-heat modeling
+- MATLAB scripts for evaporative cooling analysis
+- Generated plots and temperature distribution visualizations
+- Full academic project report (PDF)
+
+---
+
+## Authors
+Matthew Woods  
+Alon Pavlov  
+
+University of California, San Diego
+
+---
+
+## Citation
+If you use or reference this work, please cite the project report included in this repository.
