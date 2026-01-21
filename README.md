@@ -54,6 +54,8 @@ The goal is to improve physical realism and predictive accuracy for biomedical t
 
 ### Governing Equation
 
+q(r,t) = -k ∇T(r,t)
+
 The three‑phase lag bio‑heat equation integrates:
 
 * Conduction
