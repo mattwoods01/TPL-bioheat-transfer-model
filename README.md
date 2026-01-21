@@ -41,4 +41,52 @@ $$
 
 ### 3) Three-Phase Lag (TPL) Bio-Heat Model
 
-Kumar &
+Kumar & Kaur’s three-phase lag formulation (as presented in this report) is:
+
+$$
+\left(1+\tau_q \frac{\partial}{\partial t}\right)
+\left(
+\rho c \frac{\partial^2 T}{\partial t^2}
+-\dot{Q}_b
+-\dot{Q}_m
+\right)
+=
+\left[
+k^{*} + (k+k^{*}\tau_v)\frac{\partial}{\partial t}
++ k\tau_T \frac{\partial^2}{\partial t^2}
+\right]
+\left(
+\frac{\partial^2 T}{\partial x^2}+\frac{\partial^2 T}{\partial y^2}
+\right)
+$$
+
+- $\rho$: tissue density  
+- $c$: tissue specific heat  
+- $\dot{Q}_b$: blood perfusion heat source  
+- $\dot{Q}_m$: metabolic heat source  
+- $\tau_v$: thermal displacement relaxation time  
+- $k^{*}$: modified conductivity term :contentReference[oaicite:3]{index=3}
+
+---
+
+## Initial and Symmetry Conditions
+
+$$
+T(x,y,0)=T_w
+$$
+
+$$
+\frac{\partial T(x,y,0)}{\partial t}=0
+$$
+
+$$
+\frac{\partial^2 T(x,y,0)}{\partial t^2}=0
+$$
+
+Symmetry (zero-gradient) conditions:
+
+$$
+-k\frac{\partial T(x,L,t)}{\partial x}=0,
+\qquad
+-k\frac{\partial T(L,y,t)}{\partial y}=0
+$$
