@@ -23,6 +23,8 @@ The primary objectives of this work are:
 ---
 
 ## Methods Overview
+<img width="1347" height="1039" alt="image" src="https://github.com/user-attachments/assets/a6af3adf-a67f-4ee1-9917-261f582ba24d" />
+
 A two-dimensional numerical simulation framework was used to model heat transfer in a small patch of human skin tissue. The model incorporates physiological heat sources such as metabolic heat production and blood perfusion.
 
 The following methodological components were evaluated:
