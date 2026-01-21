@@ -72,7 +72,6 @@ Accurate bio-heat modeling is essential for predicting tissue damage in medical 
 
 ## Repository Contents
 - Python simulation scripts for transient bio-heat modeling
-- MATLAB scripts for evaporative cooling analysis
 - Generated plots and temperature distribution visualizations
 - Full academic project report (PDF)
 
