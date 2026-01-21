@@ -58,7 +58,7 @@ A simplified physiological model of sweating was incorporated to examine heat lo
 
 Under the tested conditions and surface area, evaporative cooling was found to have a relatively small effect compared to metabolic heat production and blood perfusion. However, the framework allows for future expansion to larger surface areas and different environmental conditions.
 
-<img width="984" height="893" alt="image" src="https://github.com/user-attachments/assets/3e6fccec-806f-4a0c-a8ed-3b3734963a92" />
+<img width="1200" height="960" alt="image" src="https://github.com/user-attachments/assets/52de73c5-216d-41fe-b6cc-9e4601dd11c7" />
 
 <img width="1013" height="691" alt="image" src="https://github.com/user-attachments/assets/f38d4cf6-071b-4c4f-a29c-f358a80309fc" />
 
